@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' hide Action;
 import 'package:counter_7/drawer.dart';
-import 'package:counter_7/form.dart';
+import 'package:counter_7/page/form.dart';
 
 class BudgetDataPage extends StatefulWidget {
   const BudgetDataPage({super.key});

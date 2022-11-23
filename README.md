@@ -278,3 +278,156 @@ for (int i = 0; i < indexLength; i++) ListView(
 ),
 ```
 
+## Tugas 9
+**1. Apakah bisa kita melakukan pengambilan data JSON tanpa membuat model terlebih dahulu? Jika iya, apakah hal tersebut lebih baik daripada membuat model sebelum melakukan pengambilan data JSON?**
+Bisa, namun tidak lebih baik jika dibandingkan dengan membuat model sebelum melakukan pengembalian data JSON. Caranya adalah dengan menggunakan library yang dimiliki dart yaitu convert.
+
+**2. Sebutkan widget apa saja yang kamu pakai di proyek kali ini dan jelaskan fungsinya.**
+- Appbar: digunakan sebagai menu penunjuk atau dapat menampilkan beberapa navigasi dari aplikasi.
+- Icons
+- Scaffold: widget utama untuk membuat sebuah halaman pada flutter.
+- Container: berfungsi sebagai pembungkus widget-widget lainnya.
+- Row, Column
+- Text, TextStyle, TextButton: menampilkan teks dengan style.
+- FloatingActionButton: tombol icon mengambang berbentuk lingkaran yang berfungsi untuk melakukan tindakan atau menambahkan sesuatu pada halaman aplikasi.
+- FutureBuilder: digunakan untuk mengolah data hasil konversi dari json.
+
+**3. Jelaskan mekanisme pengambilan data dari json hingga dapat ditampilkan pada Flutter.**
+1. Melakukan fetch data dari web service dengan menggunakan dependensi http seperti POST, GET dll.
+2. Membuat model dengan response data JSON.
+3. Menambahkan dependensi HTTP
+4. Menampilkan data ke aplikasi menggunakan FutureBuilder.
+
+**4. Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas.**
+1. Menambahkan tombol navigasi pada drawer/hamburger untuk ke halaman mywatchlist.
+```
+ListTile(
+  leading: Icon(Icons.watch_later),
+  title: Text("My Watchlist"),
+  onTap: () {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const WatchList()),
+    );
+  },
+),
+```
+2. Membuat satu file dart yang berisi model mywatchlist (mywatchlist.dart).
+3. Menambahkan halaman mywatchlist yang berisi semua watch list yang ada pada endpoint JSON di Django yang telah kamu deploy ke Heroku sebelumnya.
+- Fetch data json
+```
+Future<List<Mywatchlist>> fetchwatchlist() async {
+  var url = Uri.parse(
+      'https://tugas2-pbp-arya.herokuapp.com/mywatchlist/json/');
+  var response = await http.get(
+    url,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json",
+    },
+  );
+
+  // decode the response into the json form
+  var data = jsonDecode(utf8.decode(response.bodyBytes));
+
+  // convert the json data into watchlist object
+  List<Mywatchlist> listwatchlist = [];
+  for (var d in data) {
+    if (d != null) {
+      listwatchlist.add(Mywatchlist.fromJson(d));
+    }
+  }
+  return listwatchlist;
+}
+```
+- Menampilkan data yang sudah di fetch pada web service
+```
+body: FutureBuilder(
+  future: fetchwatchlist(),
+  builder: (context, AsyncSnapshot snapshot) {
+    if (snapshot.data == null) {
+      return const Center(child: CircularProgressIndicator());
+    } else {
+      if (!snapshot.hasData) {
+        return Column(
+          children: const [
+            Text(
+              "My Watchlist is empty",
+              style:
+                  TextStyle(color: Color(0xff59A5D8), fontSize: 20),
+            ),
+            SizedBox(height: 8),
+          ],
+        );
+      } else {
+      return ListView.builder(
+          itemCount: snapshot.data!.length,
+          itemBuilder: (_, index) => Container(
+                margin: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15.0),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Colors.black, blurRadius: 2.0)
+                    ]),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Details._getFields = snapshot.data![index].fields;
+                        print(Details.fetcher.toString());
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => WatchListDetails()),
+                        );
+                      },
+                      child: Text(
+                      "${snapshot.data![index].fields.title}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                      )
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              )
+            );
+      }
+    }
+  }
+)
+```
+**4. Menambahkan halaman detail untuk setiap mywatchlist yang ada pada daftar tersebut.**
+```
+Text(
+  Details.fetcher.title,
+  textAlign: TextAlign.center,
+  style: const TextStyle(
+    fontSize: 36,
+    fontWeight: FontWeight.bold,
+  ),
+),
+const SizedBox(height: 10),
+Text("Release Date : " + Details.fetcher.releaseDate, style: const TextStyle(fontSize: 20)),  
+Text("Rating : " + Details.fetcher.rating.toString(), style: const TextStyle(fontSize: 20)),
+Text("Watched : " + Details.showStatus(), style: const TextStyle(fontSize: 20)),
+Text("Review : " + Details.fetcher.review, style: const TextStyle(fontSize: 20)),
+```
+**5. Menambahkan tombol untuk kembali ke daftar mywatchlist**
+```
+FloatingActionButton(
+  onPressed: () {
+    Navigator.pop(context);
+  },
+  child: Text("Back", style: const TextStyle(fontSize: 14)),
+)
+```
